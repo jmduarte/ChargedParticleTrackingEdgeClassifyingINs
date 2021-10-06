@@ -35,6 +35,7 @@
 
 \journalname{Computing and Software for Big Science}
 
+%\hypersetup{draft} % disable hyperlinks due to error for now
 \begin{document}
 
 \title{Charged particle tracking via edge-classifying interaction networks
@@ -82,7 +83,8 @@ Peter Elmer$^{1}$
   In this work, we adapt the physics-motivated interaction network (IN) GNN to the problem of particle tracking in the high-pileup conditions expected at the High-Luminosity Large Hadron Collider.
   We demonstrate the IN's excellent edge-classification accuracy and tracking efficiency through a suite of measurements at each stage of GNN-based tracking: graph construction, edge classification, and track building. 
   The proposed IN architecture is substantially smaller than previously studied GNN tracking architectures; this is particularly promising as a reduction in size is critical for enabling GNN-based tracking in constrained computing environments. 
-  Furthermore, the IN may be represented as either a set of explicit matrix operations or a message passing GNN. Efforts are underway to accelerate each representation via heterogeneous computing resources towards both high-level and low-latency triggering applications. 
+  Furthermore, the IN may be represented as either a set of explicit matrix operations or a message passing GNN. 
+  Efforts are underway to accelerate each representation via heterogeneous computing resources towards both high-level and low-latency triggering applications. 
 \keywords{Graph neural networks \and tracking \and particle physics}
 % \PACS{PACS code1 \and PACS code2 \and more}
 %\subclass{MSC code1 \and MSC code2 \and more}
@@ -262,20 +264,20 @@ This represents  a fundamental trade-off between different edge-assignment algor
 \centering
 \caption{The $\pt$, noise, and same-layer filters are used as a handle on graph size by reducing the number of hits allowed into the graph. 
 Here, we profile 100 events from the TrackML \texttt{train\_1} sample; these events have an average of $N(\mathrm{total}) = 56751\pm6070$ hits in the pixel detector. Denote the hits removed by the $\pt$, noise, and same-layer filters as $N(\pt<\pt^\mathrm{min})$, $N(\mathrm{noise})$ and $N(\mathrm{same-layer})$ respectively. 
-The noise filter is observed to remove $N(\mathrm{noise})=3702\pm56$ hits, roughly $6.5\%$ of the detector occupancy. 
+The noise filter is observed to remove $N(\mathrm{noise})=3702\pm56$ hits, roughly 6.5\% of the detector occupancy. 
 The $\pt$ and same-layer filters remove hits as a function of $\pt^\mathrm{min}$; these values are reported in the table below. 
 We define $N(\mathrm{remaining})\coloneqq N(\mathrm{total})-N(\pt<\pt^\mathrm{min})-N(\mathrm{same-layer})-N(\mathrm{noise})$ to be the hits remaining after these filters are applied; $N(\mathrm{remaining})$ corresponds to the $\nnodes$ constructed in the hitgraph.}
 \label{tab:hit_losses}      
 \begin{tabular}{ r|ll|ll }
-$\pt^\mathrm{min}$ [GeV] & $N(\pt<\pt^\mathrm{min})$ & $N(\mathrm{same-layer})$ & $N(\mathrm{remaining})$ & $N(\mathrm{remaining})/N(\mathrm{total})$\\\hline
+$\pt^\mathrm{min}$ [GeV] & $N(\pt<\pt^\mathrm{min})$ & $N(\mathrm{same-layer})$ & $N(\mathrm{remaining})$ & $N(\mathrm{remaining})/N(\mathrm{total})$ [\%] \\ \hline
 2.0  & $51520 \pm 6070$ &  $439 \pm 87$  & $1090\pm157 $ & $1.9\pm0.3$ \\
 1.5  & $49880 \pm 5617$ &  $921 \pm 159$ & $2248\pm155 $ & $4.0\pm0.5$ \\
-1.0  & $45501 \pm 5057$ &  $2233\pm 333$ & $5315\pm152 $ & $9.4\pm010$ \\ 
-0.9  & $43839 \pm 4855$ &  $2735\pm 395$ & $6475\pm151 $ & $11.4\pm0.012$ \\ 
-0.8  & $41677 \pm 4583$ &  $3396\pm 480$ & $7976\pm150 $ & $0.141\pm0.015$ \\ 
-0.7  & $38778 \pm 4242$ &  $4278\pm 582$ & $9993\pm148 $ & $0.176\pm0.019$ \\ 
-0.6  & $34951 \pm 3798$ &  $5448\pm 714$ & $12650\pm146 $ & $0.223\pm0.024$ \\ 
-0.5  & $29830 \pm 3265$ &  $7025\pm 875$ & $16194\pm144 $ & $0.285\pm0.031$ \\
+1.0  & $45501 \pm 5057$ &  $2233\pm 333$ & $5315\pm152 $ & $9.4\pm1.0$ \\ 
+0.9  & $43839 \pm 4855$ &  $2735\pm 395$ & $6475\pm151 $ & $11.4\pm1.2$ \\ 
+0.8  & $41677 \pm 4583$ &  $3396\pm 480$ & $7976\pm150 $ & $14.1\pm1.5$ \\ 
+0.7  & $38778 \pm 4242$ &  $4278\pm 582$ & $9993\pm148 $ & $17.6\pm1.9$ \\ 
+0.6  & $34951 \pm 3798$ &  $5448\pm 714$ & $12650\pm146 $ & $22.3\pm2.4$ \\ 
+0.5  & $29830 \pm 3265$ &  $7025\pm 875$ & $16194\pm144 $ & $28.5\pm3.1$ \\
 \end{tabular}
 \end{table*}
 
@@ -289,7 +291,6 @@ For this reason, a \textit{barrel intersection} cut was developed, in which edge
 
 \begin{figure}[!htbp]
 \centering
-\captionsetup{labelfont=bf}
 \includegraphics[width=0.7\columnwidth]{intersecting_line_cut.pdf}
 \caption{The transition region between the barrel and endcaps introduces an ambiguity in truth labeling edges crossing from barrel to endcap layers. 
 Specifically, one may draw multiple true edges between hits in barrel layers and the innermost endcap layer. 
@@ -385,7 +386,7 @@ Accordingly, we define the model's accuracy at $\delta^*$ as $(n_\mathrm{TP}+n_\
   \includegraphics[width=.5\linewidth]{confusion_matrix_graph.pdf}
 \captionsetup{labelfont=bf}
 \caption{(Left) Loss convergence for models trained on various $\pt^\mathrm{min}$ graphs. 
-(Right) A model trained on $\pt^\mathrm{min}=1$\GeV graphs was used to evaluate an unseen $\pt^\mathrm{min}=1$\GeV graph, yielding a loss of $1.52\times10^{-3}$ and accuracy of 99.9\%. 
+(Right) A model trained on $\pt^\mathrm{min}=1$\GeV graphs was used to evaluate an unseen $\pt^\mathrm{min}=1\GeV$ graph, yielding a loss of $1.52\times10^{-3}$ and accuracy of 99.9\%. 
 98 out of 95,160 edges were incorrectly classified; these erroneous classifications are magnified in the figure.}
 \label{fig:classification}
 \end{figure*}
@@ -408,8 +409,8 @@ The results are summarized in Fig.~\ref{fig:accuracy}, which shows that the mode
 \subsection{Track Building}
 \label{sec:trackbuilding}
 
-In the track building step, the predicted edge weights $w_k\in W(\mathcal{G}_{COO})$ are used to infer that edges satisfying $w_k\geq\delta^*$ represent true track segments. 
-If the edge weight mask perfectly reproduced the training target (i.e. $\mathtt{int}(W(\mathcal{G}_{COO})\geq\delta^*)=y$), the edge-classification step would produce $n_\mathrm{particles}$ disjoint subgraphs, each corresponding to a single particle. 
+In the track building step, the predicted edge weights $w_k\in W(\mathcal{G}_\mathrm{COO})$ are used to infer that edges satisfying $w_k\geq\delta^*$ represent true track segments. 
+If the edge weight mask perfectly reproduced the training target (i.e. $\mathtt{int}(W(\mathcal{G}_\mathrm{COO})\geq\delta^*)=y$), the edge-classification step would produce $n_\mathrm{particles}$ disjoint subgraphs, each corresponding to a single particle. 
 Imperfect edge-classification leads to spurious connections between these subgraphs, prompting the need for more sophisticated track-building algorithms. 
 Here, we use the union-find algorithm~\cite{unionfind} and DBSCAN to cluster hits in the edge-weighted graphs. 
 Hit clusters are then considered to be reconstructed tracks candidates; the track candidates are then matched to simulated particles (when possible). 
@@ -434,7 +435,6 @@ Moving forward, additional tracking performance may be recovered by leveraging t
 \centering
 \captionsetup{labelfont=bf}
 \includegraphics[width=2\columnwidth,clip]{tracking_efficiencies.pdf}
-\captionsetup{labelfont=bf}
 \caption{The track-building performance of DBSCAN and union-find are measured as a function of track $\pt$ and $\eta$ for three tracking efficiency definitions. }
 \label{fig:tracking-effs}
 \end{figure*}
