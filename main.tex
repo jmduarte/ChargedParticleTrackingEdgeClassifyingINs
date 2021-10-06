@@ -35,7 +35,7 @@
 
 \journalname{Computing and Software for Big Science}
 
-%\hypersetup{draft} % disable hyperlinks due to error for now
+\hypersetup{draft} % disable hyperlinks due to error for now
 \begin{document}
 
 \title{Charged particle tracking via edge-classifying interaction networks
@@ -244,7 +244,7 @@ We note that constraining our studies to the pixel layers reduces the size of th
 \caption{Here we depict a particle tracker geometry simililar to tracker designs proposed for the HL-LHC era. 
 This ``generic tracker'' geometry is used in the TrackML dataset (see Section~\ref{sec:measurements}). The generic tracker is comprised of three sub-detectors named by the shape of their silicon modules: the pixel detector, the short strip detector, and the long strip detector. 
 Each subdetector is divided into volumes (numbered 1-18); each volume contains a set of detector layers. Volumes 8, 13, and 17 above are referred to as the \textit{barrel} of the detector because their layers sit at a constant cylindrical radius. 
-Volumes 7, 9, 12, 14, 16, and 18 comprise the tracker's \textit{endcaps} because of their disk-like shape; endcap layers are positioned at a single point along the $z$-axis.}
+Volumes 7, 9, 12, 14, 16, and 18 comprise the tracker's \textit{endcaps} because of their disk-like shape; endcap layers are positioned at a single point along the $z$-axis. The above figure is adapted from a figure in Refs.~\cite{TrackML} and the TrackML detector diagram accompanying Kaggle's TrackML dataset.}
 \label{fig:pixel} 
 \end{figure}
  
@@ -528,12 +528,11 @@ While this preliminary FPGA acceleration work is promising, there are several li
 \section{Summary and Outlook}
 \label{sec:summary}
 % Recap of paper intro 'we've presented interaction network (what network is), demonstrated excellent candidate for track finding
-In this work, we have shown that the physics-motivated IN is well-suited to the task of charged particle tracking in the high-pileup conditions expected at the HL-LHC. 
+In this work, we have shown that the physics-motivated IN is well-suited to the task of charged particle tracking across a range of hitgraph sizes. 
 Through a suite of graph construction, edge classification, and track building measurements, we have framed the IN's performance in the context of a complete GNN-based tracking pipeline. 
 The graph construction measurements demonstrate that geometric cuts, hit clustering, and data-driven strategies are effective in constructing highly-efficient graphs from pixel barrel and endcap layers; in constrained computing environments, the parameters of each strategy allow a trade-off between graph efficiency and purity. 
 \todo{Add rough summary of numbers (like a range).}
-In general, though, higher purity does not necessarily improve downstream physics performance. % In fact, we tend to see the opposite.
-\todo{Modify sentence above.}
+Though high graph efficiency is desirable in a global sense, graph purity is non-trivially related to downstream physics performance; in particular, many message-passing GNN architectures may benefit from less-pure graphs due to higher edge connectivity.
 The lightweight IN models trained in the edge classification step demonstrate extremely high edge classification efficiency for a range of $\pt^\mathrm{min}$ values. 
 Track building measurements performed on these edge-weighted graphs showed that DBSCAN's spatial clustering outperformed union-find clustering across a variety of efficiency definitions.
 
