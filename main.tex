@@ -35,9 +35,9 @@
 
 \journalname{Computing and Software for Big Science}
 
-\hypersetup{draft} % disable hyperlinks due to error for now
+%\hypersetup{draft} % disable hyperlinks due to error for now
 \begin{document}
-
+\sloppy
 \title{Charged particle tracking via edge-classifying interaction networks
 
 \thanks{S.~T. and V.~R. are supported by IRIS-HEP through the U.S. National Science Foundation (NSF) under Cooperative Agreement OAC-1836650.
@@ -80,8 +80,8 @@ Peter Elmer$^{1}$
 \begin{abstract}
   Recent work has demonstrated that geometric deep learning methods such as graph neural networks (GNNs) are well-suited to address a variety of reconstruction problems in high energy particle physics. 
   In particular, particle tracking data is naturally represented as a graph by identifying silicon tracker hits as nodes and particle trajectories as edges; given a set of hypothesized edges, edge-classifying GNNs identify those corresponding to real particle trajectories. 
-  In this work, we adapt the physics-motivated interaction network (IN) GNN to the problem of particle tracking in the high-pileup conditions expected at the High-Luminosity Large Hadron Collider.
-  We demonstrate the IN's excellent edge-classification accuracy and tracking efficiency through a suite of measurements at each stage of GNN-based tracking: graph construction, edge classification, and track building. 
+  In this work, we adapt the physics-motivated interaction network (IN) GNN toward the problem of particle tracking in pileup conditions similar to those expected at the high-luminosity Large Hadron Collider.
+  Assuming an idealized track seeding, we demonstrate the IN's excellent edge-classification accuracy and tracking efficiency through a suite of measurements at each stage of GNN-based tracking: graph construction, edge classification, and track building. 
   The proposed IN architecture is substantially smaller than previously studied GNN tracking architectures; this is particularly promising as a reduction in size is critical for enabling GNN-based tracking in constrained computing environments. 
   Furthermore, the IN may be represented as either a set of explicit matrix operations or a message passing GNN. 
   Efforts are underway to accelerate each representation via heterogeneous computing resources towards both high-level and low-latency triggering applications. 
@@ -131,18 +131,43 @@ Pseudorapidity is a measure of angle with respect to the beamline, defined as $\
 Charged particles produced in collision events move in helical trajectories through the magnetic field, generating localized hits in the detector tracker layers via ionization energy deposits. 
 Track reconstruction consists of ``connecting the dots,'' wherein hits are systematically grouped to form charged particle trajectories. 
 We refer to a pair of hits that belong to the same particle as a track segment, such that the line extending between the hits is a linear approximation of the particle's trajectory. 
-Note that in a high pileup scenario track hits might correspond to multiple overlapping particle trajectories. 
+Note that in a high-pileup scenario, track hits might correspond to multiple overlapping particle trajectories. 
 Reconstructed tracks are defined by their respective hit patterns and kinematic properties, which are extracted from each track's helix parameters. 
-Specifically, initial position and direction follow directly from helical fits and the transverse momentum $\pt$ is extracted from the track's curvature~\cite{tracking}. 
+Specifically, initial position and direction follow directly from helical fits and the transverse momentum $\pt$ is extracted from the track's curvature (see Figure~\ref{fig:tracking})~\cite{tracking}. 
 
-In this work, we focus specifically on track finding in the pixel detector, the innermost subdetector of the tracker. 
+\begin{figure*}[!htbp]
+\centering
+\captionsetup{labelfont=bf}
+\includegraphics[width=0.8\textwidth,clip]{tracking_diagram.pdf}
+\caption{(Left) A transverse view of a generic particle tracker, where the $z$-axis points out of the page. 
+Here, we see a set of four cylindrical detector layers with three particles traversing them. 
+The magnetic field (of strength $B$) is aligned with the $z$-axis such that tracks move with a radius of curvature $R$ in the transverse plane, yielding measurements of transverse momentum via $\pt=0.3\ [\frac{\GeV}{\text{T}\cdot\text{m}}]\ BR$. 
+(Middle) The four cylindrical tracker layers are ``unrolled'' in the $r$--$z$ plane to show the full event contents: three particles plus additional noise hits. 
+(Right) The corresponding hitgraph is shown with example node and edge labels. }
+\label{fig:tracking} 
+\end{figure*}
+
+In this work, we focus specifically on track finding in the pixel detector (see Fig.~\ref{fig:pixel}), the innermost subdetector of the tracker. 
 Many tracking algorithms run ``inside out,'' where track seeds from the pixel detector are used to estimate initial track parameters and propagated through the full detector \cite{cms_tracking}.  
 Improving the seeding stage of the tracking pipeline is an important step towards enabling efficient tracking at the HL-LHC; this approach is complimentary to other GNN-based tracking efforts that focus on the full tracker barrel (without including endcaps) using graph segmentation \cite{exatrkx}. 
+
+\begin{figure}[!htbp]
+\centering
+\captionsetup{labelfont=bf}
+\includegraphics[width=0.99\columnwidth,clip]{pixel_detector.pdf}
+\caption{Here we depict a particle tracker geometry similar to tracker designs proposed for the HL-LHC era. 
+This ``generic tracker'' geometry is used in the TrackML dataset (see Section~\ref{sec:measurements}). 
+The generic tracker is comprised of three sub-detectors named by the shape of their silicon modules: the pixel detector, the short strip detector, and the long strip detector. 
+Each sub-detector is divided into volumes (numbered 1-18); each volume contains a set of detector layers. 
+Volumes 8, 13, and 17 above are referred to as the \textit{barrel} of the detector because their layers sit at a constant cylindrical radius. 
+Volumes 7, 9, 12, 14, 16, and 18 comprise the tracker's \textit{endcaps} because of their disk-like shape; endcap layers are positioned at a single point along the $z$-axis. 
+The above figure is adapted from a figure in Ref.~\cite{TrackML} and the TrackML detector diagram accompanying Kaggle's TrackML dataset.}
+\label{fig:pixel} 
+\end{figure}
 
 \subsection{Tracker Hits as Graphs}
 Tracking data is naturally represented as a graph by identifying hits as nodes and track segments as (in general) directed edges (see Fig.~\ref{fig:tracking}). 
 In this scheme, nodes have cylindrical spatial features $x_k=(r_k,\phi_k,z_k)$ and edges are defined by the nodes they connect.
-Note that MC track hits used for training are assumed to originate from a single particle, defined to be the highest-\pt particle if multiple particles have contributed to the hit.
 We employ two different edge representations: 1) binary incidence matrices $R_i, R_o\in\{0,1\}^{\nedges\times \nnodes}$ in incoming/outgoing (IO) format and 2) hit index pair lists $I\in\mathbb{N}^{2\times n_{edges}}$ in coordinate (COO) format \cite{fey2019fast}.
 Specifically, the incidence matrix elements $(R_i)_{e,h}$ are $1$ if edge $e$ is incoming to hit $h$ and $0$ otherwise; $R_o$ is defined similarly for outgoing edges. 
 COO entries $I_{0,e}$ and $I_{1,e}$ are the hit indices from which edge $e$ is outgoing from and incoming to respectively.
@@ -150,18 +175,6 @@ Each edge is assigned a set of geometric features $a_{ij} = (\Delta r_{ij}, \Del
 Node and edge features are stacked into matrices $X = [x_k]\in\mathbb{R}^{\nnodes\times 3}$ and $R_a=[a_{ij}]\in\mathbb R^{\nedges\times 4}$. 
 Accordingly, we define \textit{hitgraphs} representing tracking data as $\mathcal{G}_\mathrm{IO}\coloneqq (X, R_a, R_i, R_o)$ and $\mathcal{G}_\mathrm{COO}\coloneqq (X,R_a,I)$. 
 The corresponding training target is the vector $y\in\mathbb{R}^{\nedges}$, whose components $y_e$ are $1$ when edge $e$ connects two hits associated to the same particle and $0$ otherwise.
-
-\begin{figure*}[!htbp]
-\centering
-\captionsetup{labelfont=bf}
-\includegraphics[width=0.8\textwidth,clip]{tracking_diagram.pdf}
-\caption{(Left) A transverse view of a generic particle tracker. 
-The magnetic field (of strength $B$) is aligned with the $z$-axis such that tracks move with a radius of curvature $R$ in the transverse plane, yielding measurements of transverse momentum via $\pt=0.3\ [\frac{\GeV}{\text{T}\cdot\text{m}}]\ BR$. 
-(Middle) The tracker barrel layers are unrolled in the $r$--$z$ plane to show the full three-particle plus noise event. 
-(Right) The corresponding hitgraph is shown with example node and edge labels. }
-\label{fig:tracking} 
-\end{figure*}
- 
 
 \section{Interaction Networks}
 \label{sec:IN}
@@ -173,7 +186,7 @@ We adapt the IN to the problem of edge classification by conceptualizing each hi
 In this context, the relational and object reasoning steps correspond to edge and node re-embeddings respectively. 
 In an edge classification scheme, the IN must determine whether or not each edge represents a track segment. 
 Accordingly, we extend the IN forward pass to include an additional relational reasoning step, which produces an edge weight for each edge in the hitgraph. 
-We consider two formulations of the IN: 1) the matrix formulation, suitable for edge-classification on $\mathcal{G}_\mathrm{IO}$ defined via \textsc{PyTorch}~\cite{pytorch} and 2) the message-passing formulation, suitable for edge-classification on $\mathcal{G}_\mathrm{COO}$ defined via \textsc{PyTorch Geometric} (\textsc{PyG}) ~\cite{fey2019fast}. 
+We consider two formulations of the IN: (1) the matrix formulation, suitable for edge-classification on $\mathcal{G}_\mathrm{IO}$ defined via \textsc{PyTorch}~\cite{pytorch} and (2) the message-passing formulation, suitable for edge-classification on $\mathcal{G}_\mathrm{COO}$ defined via \textsc{PyTorch Geometric} (\textsc{PyG}) ~\cite{fey2019fast}. 
 These formulations are equivalent in theory, but specific implementations and training procedures can vary their computational and physics performance. 
 In particular, the COO encoding of the edge adjacency can greatly reduce the memory footprint for training. 
 For this reason, the measurements performed in this paper are based on the message-passing formulation. 
@@ -216,7 +229,9 @@ An additional relational reasoning step gives edge weights
 \begin{align}
     w_{ij}^{(1)} \coloneqq \phi_{R,2}\big(x_i^{(1)}, x_j^{(1)}, a_{ij}^{(1)}\big)\label{edgeweight}
 \end{align}
-In this way, we produce edge weights $W(\mathcal{G}_\mathrm{COO})=[w_{ij}^{(1)}]$ from the re-embedded graph with node features $\tilde{X}=[x_i^{(1)}]$ and edge features $E=[a_{ij}^{(1)}]$. This formulation is easily generalized to $T>1$ by applying Eqns.~\ref{edgeupdate} and ~\ref{nodeupdate} in sequence at each time step before finally calculating edge weights via Eqn.~\ref{edgeweight} at time $T$. In the following studies, we focus on the simplest case of nearest-neighbor message passing ($T=1$). 
+In this way, we produce edge weights $W(\mathcal{G}_\mathrm{COO})=[w_{ij}^{(1)}]$ from the re-embedded graph with node features $\tilde{X}=[x_i^{(1)}]$ and edge features $E=[a_{ij}^{(1)}]$. 
+This formulation is easily generalized to $T>1$ by applying Eqns.~\ref{edgeupdate} and ~\ref{nodeupdate} in sequence at each time step before finally calculating edge weights via Eqn.~\ref{edgeweight} at time $T$. 
+In the following studies, we focus on the simplest case of nearest-neighbor message passing ($T=1$). 
 
 \section{Measurements}
 \label{sec:measurements}
@@ -237,23 +252,14 @@ We focus specifically on the pixel layers, a highly-granular set of four barrel 
 The pixel layers are shown in Figure~\ref{fig:pixel}.
 We note that constraining our studies to the pixel layers reduces the size of the hitgraphs such that they can be held in memory and processed by the GNN without segmentation.
 
-\begin{figure}[!htbp]
-\centering
-\captionsetup{labelfont=bf}
-\includegraphics[width=0.99\columnwidth,clip]{pixel_detector.pdf}
-\caption{Here we depict a particle tracker geometry simililar to tracker designs proposed for the HL-LHC era. 
-This ``generic tracker'' geometry is used in the TrackML dataset (see Section~\ref{sec:measurements}). The generic tracker is comprised of three sub-detectors named by the shape of their silicon modules: the pixel detector, the short strip detector, and the long strip detector. 
-Each subdetector is divided into volumes (numbered 1-18); each volume contains a set of detector layers. Volumes 8, 13, and 17 above are referred to as the \textit{barrel} of the detector because their layers sit at a constant cylindrical radius. 
-Volumes 7, 9, 12, 14, 16, and 18 comprise the tracker's \textit{endcaps} because of their disk-like shape; endcap layers are positioned at a single point along the $z$-axis. The above figure is adapted from a figure in Refs.~\cite{TrackML} and the TrackML detector diagram accompanying Kaggle's TrackML dataset.}
-\label{fig:pixel} 
-\end{figure}
- 
+
 \subsection{Graph Construction}
 \label{sec:Graph}
 In the graph construction stage, each event's tracker hits are converted to a hitgraph through an edge selection algorithm. 
 Typically, a set of truth filters are applied to hits before they are assigned to graph nodes. 
 For example, \textit{$\pt$ filters} reject hits generated by particles with $\pt<\pt^\mathrm{min}$, \textit{noise filters} reject noise hits, and \textit{same-layer filters} reject all but one hit per layer for each particle. 
-These truth filters are used to modulate the number of hits present in each hit graph
+These truth filters are used to modulate the number of hits present in each hit graph to make it more feasible to apply GNN methods and can be thought of as an idealized track seeding step.
+One goal of future R\&D is to lower or remove this truth-based filter or replace it with a realistic track seeding step that could be applied in a high-pileup experimental setting.
 After initial hit filtering yields a set of nodes, edge-assignment algorithms extend edges between certain nodes. 
 These edges are inputs to the inference stage and must therefore represent as many true track segments as possible. 
 Naively, one might return a fully-connected hitgraph. 
@@ -284,6 +290,9 @@ $\pt^\mathrm{min}$ [GeV] & $N(\pt<\pt^\mathrm{min})$ & $N(\mathrm{same-layer})$ 
 In this work, we compare multiple graph construction algorithms, each of which determines whether or not to extend an edge with features $a_{ij}$ between hits $i$ and $j$. 
 In all methods, only pixel detector hits are considered, pseudorapidity is restricted to $\eta\in[-4,4]$, and 
 the noise and same-layer hit filters are applied. 
+Each method has the same definition of graph construction efficiency $(N_{\mathrm{true}}^{\mathrm{reconstructed}}/N_{\mathrm{true}}^{\mathrm{possible}})$ and purity $(N_{\mathrm{true}}^{\mathrm{reconstructed}}/N_{\mathrm{total}}^{\mathrm{reconstructed}})$.
+The denominator quantity $N_{\mathrm{true}}^{\mathrm{possible}}$ is independent of the graph construction algorithm such one may directly compare the efficiencies of various methods.
+On the other hand, the denominator $N_{\mathrm{total}}^{\mathrm{reconstructed}}$ depends on the specific graph construction routine; for this reason, it is important to study purity in the context of efficiency.
 The same-layer filter introduces an ambiguity in defining edges between the barrel and innermost endcap layers. 
 Specifically, barrel hits generated by the same particle could produce multiple true edges incoming to a single endcap hit. 
 The resulting triangular edge pattern conflicts with the main assumption of the same-layer filter, that only one true track segment exists between each subsequent layer. 
@@ -404,6 +413,7 @@ As shown in Fig.~\ref{fig:classification}, the training process results in smoot
 Classification accuracy degrades slightly as $\pt^\mathrm{min}$ is lowered below $1\GeV$; hyperparameter studies indicate that larger networks improve performance on lower $\pt^\mathrm{min}$ graphs (see Fig.~\ref{fig:forward-pass}). 
 A transfer learning study was conducted in which models trained on graphs at a specific $\pt^\mathrm{min}$ were tested on graph samples at a range of $\pt^\mathrm{min}$. 
 The results are summarized in Fig.~\ref{fig:accuracy}, which shows that the models achieve relatively robust performance on a range of graph sizes. 
+These results suggest it may be possible to train IN models in simplified scenarios and apply them to more complex realistic scenarios (e.g. without a $\pt^\mathrm{min}$ cut). 
 
 
 \subsection{Track Building}
@@ -446,36 +456,38 @@ Moving forward, additional tracking performance may be recovered by leveraging t
 
 An important advantage of GNN-based approaches over traditional methods for HEP reconstruction is the ability to natively run on highly parallel computing architectures.
 The \textsc{PyG} library supports graphics processing units (GPUs) to parallelize the algorithm execution.
+Moreover, the model was prepared for inference by converting it to a TorchScript program~\cite{torchscript}.
 For the IN studied in this work, the average CPU and GPU inference times per graph for a variety of minimum $\pt$ cuts is shown in Table~\ref{tab:timing}.
 For this test, the graphs are constructed using the geometric selections as described in Section~\ref{sec:Graph}. 
 Moreover, we use bidirectional graphs, which means both directed edges (outward and inward from the primary vertex) are present in the edge list.
 As can be seen, inference can be significantly sped up with heterogeneous resources like GPUs.
-For instance, for a 0.5\GeV minimum \pt cut, the inference time can be reduced by nearly a factor of 20 using the GPU with respect to the CPU.
-In general, the speedup is greater at lower \pt because of the higher multiplicity and thus the greater gain from parallelization on the GPU versus the CPU.
+For instance, for a 0.5\GeV minimum \pt cut, the inference time can be reduced by approximately a factor of 10 using the GPU with respect to the CPU.
+In general, the speedup is greater at lower $\pt^\mathrm{min}$ because of the higher multiplicity and thus the greater gain from parallelization on the GPU versus the CPU.
 Other heterogeneous computing resources specialized for inference may be even more beneficial. 
 This speed up may benefit the experiments' computing workflows by accessing these resources as an on-demand, scalable service~\cite{Krupa:2020bwg,Rankin:2020usv,Wang:2020fjr}.
 
 \begin{table*}
 \centering
 \caption{CPU and GPU inference time estimates for each $\pt$ threshold. 
+The model was prepared for inference by converting it to a TorchScript program.
 The timing test were performed with an Nvidia Titan Xp GPU with 12\,GB RAM and a 12-core Intel Xeon CPU E5-2650 v4 @ 2.20\,GHz.
 Inference is performed with a batch size of one graph. 
 Graphs are constructed using geometric restrictions with bidirectional edges (both edge directions are present).
 The inference is repeated 100 times (after some warm-up) for 5 iterations and the best time per inference over the 5 iterations is found.
 The mean and standard deviation of the best inference time derived for 5 random graphs in the testing dataset is then reported.
 The mean and standard deviation of the number of nodes and edges are also reported for 100 graphs.
-We find a significant speedup with the GPU versus the CPU, which is greater at lower \pt because of the higher multiplicity and thus the greater gain from parallelization on the GPU.}
+We find a significant speedup with the GPU versus the CPU, which is greater at lower $\pt^\mathrm{min}$ because of the higher multiplicity and thus the greater gain from parallelization on the GPU.}
 \label{tab:timing}      
 \begin{tabular}{ r|llll }
 $\pt^\mathrm{min}$ [GeV] & CPU [ms] & GPU [ms] & $\overline{n}_\mathrm{nodes}$ & $\overline{n}_\mathrm{edges}$ \\\hline
- 2  &  $5.69 \pm 1.61$ &  $1.69 \pm 0.38$ & $1090.6 \pm 192.8$ & $9080.7 \pm 3027.1$ \\
- 1.5  & $18.92 \pm 12.26$ & $1.73 \pm 0.39$ & $2247.0 \pm 363.9$ & $30980.6 \pm 9468.6$\\
-  1  & $47.52 \pm 21.99$ & $3.55 \pm 0.94$ & $5309.3 \pm 765.5$ & $200910.1 \pm 55825.9$ \\
- 0.9 & $87.56 \pm 54.03$ & $5.40 \pm 1.43$ & $6468.5 \pm 912.2$ & $312809.5 \pm 85441.3$ \\
- 0.8 & $177.80 \pm 57.68$ & $9.81 \pm 2.73$ & $7970.5 \pm 1100.0$  &  $556417.7 \pm 151482.8$\\
- 0.7 & $352.80 \pm 89.69$ & $18.16 \pm 4.51$ &  $9982.7 \pm 1341.5$ & $1011884.4 \pm 268706.0$\\
- 0.6  & $573.00 \pm 102.95$ & $29.64 \pm 6.88$ & $12640.0 \pm 1648.2$ & $1585883.3 \pm 409146.8$ \\
- 0.5  & $831.20 \pm 176.72$ &  $47.60 \pm 10.60$& $16178.6 \pm 2019.1$ &  $2535979.6 \pm 628297.1$\\
+ 2  &  $3.83 \pm 0.89$ &  $0.95 \pm 0.01$ & $1090.6 \pm 192.8$ & $9080.7 \pm 3027.1$ \\
+ 1.5  & $7.96 \pm 1.44$ & $0.95 \pm 0.03$ & $2247.0 \pm 363.9$ & $30980.6 \pm 9468.6$\\
+  1  & $33.96 \pm 11.24$ & $3.61 \pm 0.91$ & $5309.3 \pm 765.5$ & $200910.1 \pm 55825.9$ \\
+ 0.9 & $52.44 \pm 14.15$ & $5.36 \pm 1.37$ & $6468.5 \pm 912.2$ & $312809.5 \pm 85441.3$ \\
+ 0.8 & $91.86 \pm 24.42$ & $9.60 \pm 2.61$ & $7970.5 \pm 1100.0$  &  $556417.7 \pm 151482.8$\\
+ 0.7 & $168.40 \pm 41.34$ & $17.70 \pm 4.39$ &  $9982.7 \pm 1341.5$ & $1011884.4 \pm 268706.0$\\
+ 0.6  & $273.20 \pm 62.09$ & $28.84 \pm 6.65$ & $12640.0 \pm 1648.2$ & $1585883.3 \pm 409146.8$ \\
+ 0.5  & $437.00 \pm 97.99$ &  $44.66 \pm 7.91$& $16178.6 \pm 2019.1$ &  $2535979.6 \pm 628297.1$\\
 \end{tabular}
 \end{table*}
 
@@ -529,16 +541,19 @@ While this preliminary FPGA acceleration work is promising, there are several li
 \label{sec:summary}
 % Recap of paper intro 'we've presented interaction network (what network is), demonstrated excellent candidate for track finding
 In this work, we have shown that the physics-motivated IN is well-suited to the task of charged particle tracking across a range of hitgraph sizes. 
-Through a suite of graph construction, edge classification, and track building measurements, we have framed the IN's performance in the context of a complete GNN-based tracking pipeline. 
+Through a suite of graph construction, edge classification, and track building measurements, we have framed the IN's performance in the context of a GNN-based tracking pipeline following a truth-based track seeding assumption in which hits associated to low transverse momentum ($\pt$) tracks are removed. 
 The graph construction measurements demonstrate that geometric cuts, hit clustering, and data-driven strategies are effective in constructing highly-efficient graphs from pixel barrel and endcap layers; in constrained computing environments, the parameters of each strategy allow a trade-off between graph efficiency and purity. 
-\todo{Add rough summary of numbers (like a range).}
+In particular, for a fixed graph construction efficiency of $\mathcal{O}(99\%)$, we show that geometric cuts alone produce reasonably pure graphs ($\sim4\%$ purity at $\pt^\mathrm{min}=1\GeV$) but that the module-map method produces the most pure graphs for the entire range of $\pt^\mathrm{min}$ ($\sim10\%$ purity at $\pt^\mathrm{min}=1\GeV$).
+With efficiency held constant, purity is more-or-less a comparison of graph sizes, indicating that the module map method most suited for graph construction in constrained computing environments. 
 Though high graph efficiency is desirable in a global sense, graph purity is non-trivially related to downstream physics performance; in particular, many message-passing GNN architectures may benefit from less-pure graphs due to higher edge connectivity.
-The lightweight IN models trained in the edge classification step demonstrate extremely high edge classification efficiency for a range of $\pt^\mathrm{min}$ values. 
+
+The lightweight IN models trained in the edge classification step demonstrate extremely high edge classification efficiency for a range of minimum particle $\pt$ thresholds $\pt^\mathrm{min}$.
+Significantly, we find models trained in simpler scenarios (larger $\pt^\mathrm{min}$) generalize to more complex scenarios (smaller $\pt^\mathrm{min}$).
 Track building measurements performed on these edge-weighted graphs showed that DBSCAN's spatial clustering outperformed union-find clustering across a variety of efficiency definitions.
 
 The IN architecture presented here is substantially smaller than previous GNN tracking architectures, which may enable its use in constrained computing environments.
 Accordingly, we have compared the IN's CPU and GPU inference times and discussed related work on accelerating INs with FPGAs. 
-As described in Section \ref{sec:timing}, there are several limitations to the current FPGA implementation of the IN and addressing these concerns is the subject of ongoing work. 
+As described in Section~\ref{sec:timing}, there are several limitations to the current FPGA implementation of the IN and addressing these concerns is the subject of ongoing work. 
   
 % Summarize performance results at each step (construction, inference, building) Highlight that the architecture is very small, highlight that we added endcaps, highlight that we quantify performance for graph construction specifically which hasn't been discussed much before in other work 
 
@@ -568,6 +583,6 @@ We gratefully acknowledge the input and discussion from the Exa.TrkX collaborati
 %\clearpage
 
 
-\bibliographystyle{spphys}       % APS-like style for physics
+\bibliographystyle{cms_unsrt}       % APS-like style for physics
 \bibliography{refs}   % name your BibTeX data base
 \end{document}
