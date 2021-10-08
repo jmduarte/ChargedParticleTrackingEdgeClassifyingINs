@@ -71,7 +71,7 @@ Peter Elmer$^{1}$
 \maketitle
 
 \begin{abstract}
-  Recent work has demonstrated that geometric deep learning methods such as graph neural networks (GNNs) are well-suited to address a variety of reconstruction problems in high energy particle physics. 
+  Recent work has demonstrated that geometric deep learning methods such as graph neural networks (GNNs) are well suited to address a variety of reconstruction problems in high energy particle physics. 
   In particular, particle tracking data is naturally represented as a graph by identifying silicon tracker hits as nodes and particle trajectories as edges; given a set of hypothesized edges, edge-classifying GNNs identify those corresponding to real particle trajectories. 
   In this work, we adapt the physics-motivated interaction network (IN) GNN toward the problem of particle tracking in pileup conditions similar to those expected at the high-luminosity Large Hadron Collider.
   Assuming an idealized track seeding, we demonstrate the IN's excellent edge-classification accuracy and tracking efficiency through a suite of measurements at each stage of GNN-based tracking: graph construction, edge classification, and track building. 
@@ -96,7 +96,7 @@ To this end, ongoing research focuses on both accelerating current tracking algo
 Geometric deep learning (GDL)~\cite{gdl,zhang2020deep,zhou2019graph,wu2019comprehensive} is a growing sub-field of ML focused on learning representations on non-Euclidean domains such as sets, graphs, and manifolds. 
 Graph neural networks (GNNs)~\cite{gnnmodel,pointnet,gilmer2017neural,IN,relational,DGCNN} are the subset of GDL algorithms that operate on graphs, data represented as a set of nodes connected by edges, and have been explored for a variety of tasks in high energy physics~\cite{duarte2020graph,Shlomi_2021}. 
 Particle tracking data is naturally represented as a graph; detector hits form a 3D point cloud and the edges between them represent hypotheses about particle trajectories. 
-Recent progress by the Exa.TrkX project and other collaborations has demonstrated that edge-classifying GNNs are well-suited to particle tracking applications~\cite{heptrkx,exatrkx,IN_fpga}. 
+Recent progress by the Exa.TrkX project and other collaborations has demonstrated that edge-classifying GNNs are well suited to particle tracking applications~\cite{heptrkx,exatrkx,IN_fpga,Ju:2021ayy}. 
 Tracking via edge classification typically involves three stages. 
 In the graph construction stage, silicon tracker hits are mapped to nodes and an edge-assignment algorithm forms edges between certain nodes. 
 In the edge classification stage, an edge-classifying GNN infers the probability that each edge corresponds to a true track segment meaning that both hits (nodes connecting the edge) are associated to the same truth particle, as discussed further in Sec.~\ref{sec:TrackML}.
@@ -256,7 +256,7 @@ These edges are inputs to the inference stage and must therefore represent as ma
 Naively, one might return a fully-connected hitgraph. 
 However, this strategy yields $\frac{1}{2}\nnodes(\nnodes-1)$ edges, which for $\nnodes\sim\mathcal{O}(1,000)$ gives $\nedges\sim\mathcal{O}(500,000)$. 
 This represents  a fundamental trade-off between different edge-assignment algorithms: they must simultaneously maximize \textit{efficiency}, the fraction of track segments represented as true edges, and \textit{purity}, the fraction of true edges to total edges in the hitgraph.
-
+\mathchardef\mhyphen="2D
 \begin{table*}
 \centering
 \caption{The $\pt$, noise, and same-layer filters are used as a handle on graph size by reducing the number of hits allowed into the graph. 
@@ -266,7 +266,7 @@ The $\pt$ and same-layer filters remove hits as a function of $\pt^\mathrm{min}$
 We define $N(\mathrm{remaining})\coloneqq N(\mathrm{total})-N(\pt<\pt^\mathrm{min})-N(\mathrm{same-layer})-N(\mathrm{noise})$ to be the hits remaining after these filters are applied; $N(\mathrm{remaining})$ corresponds to the $\nnodes$ constructed in the hitgraph.}
 \label{tab:hit_losses}      
 \begin{tabular}{ r|ll|ll }
-$\pt^\mathrm{min}$ [GeV] & $N(\pt<\pt^\mathrm{min})$ & $N(\mathrm{same-layer})$ & $N(\mathrm{remaining})$ & $N(\mathrm{remaining})/N(\mathrm{total})$ [\%] \\ \hline
+$\pt^\mathrm{min}$ [GeV] & $N(\pt<\pt^\mathrm{min})$ & $N(\mathrm{same\mhyphen layer})$ & $N(\mathrm{remaining})$ & $N(\mathrm{remaining})/N(\mathrm{total})$ [\%] \\ \hline
 2.0  & $51520 \pm 6070$ &  $439 \pm 87$  & $1090\pm157 $ & $1.9\pm0.3$ \\
 1.5  & $49880 \pm 5617$ &  $921 \pm 159$ & $2248\pm155 $ & $4.0\pm0.5$ \\
 1.0  & $45501 \pm 5057$ &  $2233\pm 333$ & $5315\pm152 $ & $9.4\pm1.0$ \\ 
@@ -381,7 +381,7 @@ Accordingly, we define the model's accuracy at $\delta^*$ as $(n_\mathrm{TP}+n_\
   \includegraphics[width=.45\linewidth]{training_convergence.pdf}
   \includegraphics[width=.5\linewidth]{confusion_matrix_graph.pdf}
 \caption{(Left) Loss convergence for models trained on various $\pt^\mathrm{min}$ graphs. 
-(Right) A model trained on $\pt^\mathrm{min}=1$\GeV graphs was used to evaluate an unseen $\pt^\mathrm{min}=1\GeV$ graph, yielding a loss of $1.52\times10^{-3}$ and accuracy of 99.9\%. 
+(Right) A model trained on $\pt^\mathrm{min}=1\GeV$ graphs was used to evaluate an unseen $\pt^\mathrm{min}=1\GeV$ graph, yielding a loss of $1.52\times10^{-3}$ and accuracy of 99.9\%. 
 98 out of 95,160 edges were incorrectly classified; these erroneous classifications are magnified in the figure.}
 \label{fig:classification}
 \end{figure*}
@@ -416,7 +416,8 @@ We define three tracking efficiency measurements using progressively tighter req
     \item Double-majority efficiency: the number of reconstructed tracks containing over 50\% of hits from the same particle and over 50\% of that particle's hits, divided by the total number of particles.
     \item Perfect match efficiency: the number of reconstructed tracks containing only hits from the same particle and every hit generated by that particle, divided by the number of particles.
 \end{enumerate}
-Fig. \ref{fig:tracking-effs} shows each of these tracking efficiencies as a function of track $\pt$ and $\eta$ for both the DBSCAN and union-find clustering approaches. Additionally, Table XX shows the fake rate (non-matched clusters/all clusters) across the full $\pt$ and $\eta$ range. 
+Fig. \ref{fig:tracking-effs} shows each of these tracking efficiencies as a function of track $\pt$ and $\eta$ for both the DBSCAN and union-find clustering approaches. 
+Additionally, Table~\ref{tab:fake-rate} shows the fake rate (unmatched clusters relative to all clusters) across the full $\pt$ and $\eta$ range. 
 Tracking performance is relatively stable at low $\pt$ but degrades for higher $\pt$ tracks; similar effects have been noted in other edge-weight-based hit clustering schemes \cite{Biscarat:2021dlj}. 
 The tracking efficiencies are lowest in the neighborhood of $\eta=0$, indicating that performance is worst in the pixel barrel region.
 This is consistent with the observation that most edge classification errors occur in the barrel, where the density of detector modules is significantly higher \cite{TrackML}. 
@@ -429,21 +430,22 @@ Moving forward, additional tracking performance may be recovered by leveraging t
 \begin{figure*}[!htbp]
 \centering
 \includegraphics[width=2\columnwidth,clip]{tracking_efficiencies.pdf}
-\caption{The track-building performance of DBSCAN and union-find are measured as a function of track $\pt$ and $\eta$ for three tracking efficiency definitions. }
+\caption{The track-building performance of DBSCAN and union-find are measured as a function of particle $\pt$ and $\eta$ for three tracking efficiency definitions for $\pt^\mathrm{min}=0.9\GeV$. }
 \label{fig:tracking-effs}
 \end{figure*}
 
-\begin{table}[]
+\begin{table}[!htbp]
     \centering
-    \begin{tabular}{efficiency | union-find | DBSCAN}
-         &  & \\
-         &  &
+    \begin{tabular}{r|ll}
+        Efficiency definition & Union-find & DBSCAN\\
+        \hline
+        LHC match & $0.0471\pm0.008$ & $0.0275\pm0.005$\\
+        Double majority & $0.0934\pm0.01$ & $0.0891\pm0.01$\\
+        Perfect match & $0.0910\pm0.01$ & $0.1242\pm0.01$\\
     \end{tabular}
     \caption{Caption}
-    \label{tab:my_label}
+    \label{tab:fake-rate}
 \end{table}
-
-% Add fake rate as well as efficiency
 
 \subsection{Inference Timing}
 \label{sec:timing}
@@ -534,14 +536,14 @@ While this preliminary FPGA acceleration work is promising, there are several li
 \section{Summary and Outlook}
 \label{sec:summary}
 % Recap of paper intro 'we've presented interaction network (what network is), demonstrated excellent candidate for track finding
-In this work, we have shown that the physics-motivated IN is well-suited to the task of charged particle tracking across a range of hitgraph sizes. 
-Through a suite of graph construction, edge classification, and track building measurements, we have framed the IN's performance in the context of a GNN-based tracking pipeline following a truth-based track seeding assumption in which hits associated to low transverse momentum ($\pt$) tracks are removed. 
+In this work, we have shown that the physics-motivated IN is well suited to the task of charged particle tracking across a range of hitgraph sizes. 
+Through a suite of graph construction, edge classification, and track building measurements, we have framed the IN's performance in the context of a GNN-based tracking pipeline following a truth-based track seeding preselection in which hits associated with particles whose transverse momentum ($\pt$) is below a certain threshold ($\pt^\mathrm{min}$) are removed. 
 The graph construction measurements demonstrate that geometric cuts, hit clustering, and data-driven strategies are effective in constructing highly-efficient graphs from pixel barrel and endcap layers; in constrained computing environments, the parameters of each strategy allow a trade-off between graph efficiency and purity. 
 In particular, for a fixed graph construction efficiency of $\mathcal{O}(99\%)$, we show that geometric cuts alone produce reasonably pure graphs ($\sim4\%$ purity at $\pt^\mathrm{min}=1\GeV$) but that the module-map method produces the most pure graphs for the entire range of $\pt^\mathrm{min}$ ($\sim10\%$ purity at $\pt^\mathrm{min}=1\GeV$).
 With efficiency held constant, purity is more-or-less a comparison of graph sizes, indicating that the module map method most suited for graph construction in constrained computing environments. 
 Though high graph efficiency is desirable in a global sense, graph purity is non-trivially related to downstream physics performance; in particular, many message-passing GNN architectures may benefit from less-pure graphs due to higher edge connectivity.
 
-The lightweight IN models trained in the edge classification step demonstrate extremely high edge classification efficiency for a range of minimum particle $\pt$ thresholds $\pt^\mathrm{min}$.
+The lightweight IN models trained in the edge classification step demonstrate extremely high edge classification efficiency for a range of $\pt^\mathrm{min}$.
 Significantly, we find models trained in simpler scenarios (larger $\pt^\mathrm{min}$) generalize to more complex scenarios (smaller $\pt^\mathrm{min}$).
 Track building measurements performed on these edge-weighted graphs showed that DBSCAN's spatial clustering outperformed union-find clustering across a variety of efficiency definitions.
 
@@ -557,7 +559,7 @@ Another important aspect of GNN-based tracking is reducing the time it takes to 
 Ongoing efforts are dedicated to studying how best to accelerate graph construction using heterogeneous resources.
 Alternative GNN approaches that do not require an input graph structure, such as dynamic graph convolutional neural networks~\cite{DGCNN}, distance-weighted GNNs~\cite{Qasim:2019otl}, attention-based transformers~\cite{vaswani2017attention}, reformers~\cite{kitaev2020reformer}, and performers~\cite{choromanski2021rethinking}, may be fruitful avenues of investigation as well.
 
-In summary, geometric deep learning methods are well-suited to many physics reconstruction tasks, and our work and related studies establish GNNs as an extremely promising candidate for tracking at the HL-LHC. 
+In summary, geometric deep learning methods are well suited to many physics reconstruction tasks, and our work and related studies establish GNNs as an extremely promising candidate for tracking at the HL-LHC. 
 
 % Outlook / need to integrate into future experiments, can mention we're beginning work with CMS and ATLAS? 
 
