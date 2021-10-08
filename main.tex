@@ -6,20 +6,13 @@
 \usepackage{hhline}
 \usepackage[T1]{fontenc}
 \usepackage{graphicx}
-\usepackage{mathptmx}     
-\usepackage{latexsym}
+\usepackage{newtxtext,newtxmath}
 \usepackage{flushend}
 \usepackage[colorlinks,citecolor=blue,urlcolor=blue,linkcolor=blue]{hyperref}
 \usepackage[utf8]{inputenc}
 \usepackage{amsmath}
-\usepackage{amssymb}
 \usepackage{mathtools}
 \usepackage{xspace}
-\usepackage{subcaption}
-\usepackage{multirow}
-\usepackage{multicol}
-\usepackage{todonotes}
-%\newcommand{\todo}[1]{\textcolor{red}{#1}}
 \newcommand{\pt}{\ensuremath{p_{\mathrm{T}}}\xspace}
 \newcommand{\GeV}{\ensuremath{\,\text{Ge\hspace{-.08em}V}}\xspace}
 \newcommand{\TeV}{\ensuremath{\,\text{Te\hspace{-.08em}V}}\xspace}
@@ -72,7 +65,7 @@ Peter Elmer$^{1}$
               $^{3}$University of Illinois at Urbana-Champaign, Champaign, IL, USA
 }
 
-\date{Received: date / Accepted: date}
+\date{Received: July 12, 2021 / Accepted: date}
 % The correct dates will be entered by the editor
 
 \maketitle
@@ -137,7 +130,6 @@ Specifically, initial position and direction follow directly from helical fits a
 
 \begin{figure*}[!htbp]
 \centering
-\captionsetup{labelfont=bf}
 \includegraphics[width=0.8\textwidth,clip]{tracking_diagram.pdf}
 \caption{(Left) A transverse view of a generic particle tracker, where the $z$-axis points out of the page. 
 Here, we see a set of four cylindrical detector layers with three particles traversing them. 
@@ -153,7 +145,6 @@ Improving the seeding stage of the tracking pipeline is an important step toward
 
 \begin{figure}[!htbp]
 \centering
-\captionsetup{labelfont=bf}
 \includegraphics[width=0.99\columnwidth,clip]{pixel_detector.pdf}
 \caption{Here we depict a particle tracker geometry similar to tracker designs proposed for the HL-LHC era. 
 This ``generic tracker'' geometry is used in the TrackML dataset (see Section~\ref{sec:measurements}). 
@@ -329,7 +320,6 @@ It should be noted, however, that purer graphs do not necessarily lead to higher
 
 \begin{figure}[!htbp]
 \centering
-\captionsetup{labelfont=bf}
 \includegraphics[width=0.9\columnwidth]{truth_labeled_graphs.png}
 \caption{Edge colors indicate truth labels; blue edges are true track segments and back edges are false. 
 Varying $\pt^\mathrm{min}$ modulates the graph size. 
@@ -340,7 +330,6 @@ Preclustering and data-driven edge selections reduce the fraction of false edges
 
 \begin{figure}[!htbp]
 \centering
-\captionsetup{labelfont=bf}
 \includegraphics[width=\columnwidth]{graph_construction_measurements.pdf}
 \caption{Graph construction efficiency, purity, node counts, and edge counts are reported for a range of $\pt^\mathrm{min}$ calculated using 100 random graphs from the \texttt{train\_1} sample.}
 \label{fig:build-measurements} 
@@ -349,11 +338,20 @@ Preclustering and data-driven edge selections reduce the fraction of false edges
 \subsection{Edge Classification}
 \label{sec:edgeclass}
 
+\begin{figure*}[!htbp]
+\centering
+  \includegraphics[width=.5\linewidth]{network_diagram.pdf}
+  \includegraphics[width=.4\linewidth]{hyperparam_scans_0p7.pdf}
+\caption{(Left) The complete IN forward-pass with the relational and object models approximated as MLPs.
+(Right) An example hyperparameter scan in which a models with varying numbers of hidden units (h.u.) were trained on $\pt^\mathrm{min}=0.7\GeV$ graphs.}
+\label{fig:forward-pass}
+\end{figure*}
+
 As detailed in Sec.~\ref{sec:IN}, we have implemented the IN in \textsc{PyTorch}~\cite{pytorch} as a set of explicit matrix operations and in \textsc{PyG}~\cite{fey2019fast} as a MPNN. 
 Both implementations are available in the \textsc{Git} repository accompanying this paper~\cite{IN_repo}. 
 In the following studies, we limit our focus to the MPNN implementation trained on graphs built using geometric cuts only. 
 Because \textsc{PyG} accommodates the sparse $\mathcal{G}_\mathrm{COO}$ edge representation, the MPNN implementation is significantly faster and more flexible than the matrix implementation (see \ref{sec:timing}). 
-The full forward-pass, comprised of edge and node blocks used to predict edge weights, is shown in Fig.~\ref{fig:forward-pass} below. 
+The full forward-pass, comprised of edge and node blocks used to predict edge weights, is shown in Fig.~\ref{fig:forward-pass}. 
 The functions $\phi_{R,1}$, $\phi_{R,2}$, and $\phi_O$ are approximated as multilayer perceptrons (MLPs) with rectified linear unit (ReLU) activation functions~\cite{relu1,relu2}. 
 The ReLU activation function behaves as an identity function for positive inputs and saturates at 0 for negative inputs. 
 Notably, the $\phi_{R,2}$ outputs have a sigmoid activation $\sigma(\cdot)\in(0,1)$, such that they represent probabilities, or edge weights,  $W(\mathcal{G}_\mathrm{COO})\in(0,1)^{\nedges}$ that each edge is a track segment. 
@@ -370,17 +368,6 @@ At each value of $\pt^\mathrm{min}$, 1500 graphs belonging to the TrackML \textt
 The Adam optimizer is used to facilitate training~\cite{adam}. 
 It is configured with learning rates of 3.5--8$\times10^{-3}$, which are decayed by a factor of $\gamma=0.95$ for $\pt^\mathrm{min}\leq 1\GeV$ and $\gamma=0.8$ for $\pt^\mathrm{min}> 1\GeV$ every 10 epochs.
 
-\begin{figure*}[!htbp]
-\centering
-  \includegraphics[width=.5\linewidth]{network_diagram.pdf}
-  \includegraphics[width=.4\linewidth]{hyperparam_scans_0p7.pdf}
-\captionsetup{labelfont=bf}
-\caption{(Left) The complete IN forward-pass with the relational and object models approximated as MLPs.
-(Right) An example hyperparameter scan in which a models with varying numbers of hidden units (h.u.) were trained on $\pt^\mathrm{min}=0.7\GeV$ graphs.}
-\label{fig:forward-pass}
-\end{figure*}
-
-
 In order to evaluate the IN edge-classification performance, it is necessary to define a threshold $\delta$ such that each edge weight $w_k\in W(\mathcal{G}_{COO})$ satisfying $w_k\geq\delta$ or $w_k<\delta$ indicates that edge $k$ was classified as true or false respectively. 
 Here, we define $\delta^*$ as the threshold at which the true positive rate (TPR) equals the true negative rate (TNR). 
 In principle, $\delta^*$ may be calculated individually for each graph. 
@@ -393,7 +380,6 @@ Accordingly, we define the model's accuracy at $\delta^*$ as $(n_\mathrm{TP}+n_\
 \centering
   \includegraphics[width=.45\linewidth]{training_convergence.pdf}
   \includegraphics[width=.5\linewidth]{confusion_matrix_graph.pdf}
-\captionsetup{labelfont=bf}
 \caption{(Left) Loss convergence for models trained on various $\pt^\mathrm{min}$ graphs. 
 (Right) A model trained on $\pt^\mathrm{min}=1$\GeV graphs was used to evaluate an unseen $\pt^\mathrm{min}=1\GeV$ graph, yielding a loss of $1.52\times10^{-3}$ and accuracy of 99.9\%. 
 98 out of 95,160 edges were incorrectly classified; these erroneous classifications are magnified in the figure.}
@@ -403,7 +389,6 @@ Accordingly, we define the model's accuracy at $\delta^*$ as $(n_\mathrm{TP}+n_\
 
 \begin{figure}[!htbp]
 \centering
-\captionsetup{labelfont=bf}
 \includegraphics[width=\columnwidth,clip]{transfer_learning.pdf}
 \caption{Models trained on various $\pt^\mathrm{min}$ graphs in the \texttt{train\_1} sample were tested on 400 graphs from the \texttt{train\_3} sample at various $\pt^\mathrm{min}$ thresholds. }
 \label{fig:accuracy}
@@ -443,13 +428,12 @@ Moving forward, additional tracking performance may be recovered by leveraging t
 
 \begin{figure*}[!htbp]
 \centering
-\captionsetup{labelfont=bf}
 \includegraphics[width=2\columnwidth,clip]{tracking_efficiencies.pdf}
 \caption{The track-building performance of DBSCAN and union-find are measured as a function of track $\pt$ and $\eta$ for three tracking efficiency definitions. }
 \label{fig:tracking-effs}
 \end{figure*}
 
-\todo{Add fake rate as well as efficiency}
+% Add fake rate as well as efficiency
 
 \subsection{Inference Timing}
 \label{sec:timing}
