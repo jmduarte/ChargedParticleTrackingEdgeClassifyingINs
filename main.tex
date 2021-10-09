@@ -74,7 +74,7 @@ Peter Elmer$^{1}$
   Recent work has demonstrated that geometric deep learning methods such as graph neural networks (GNNs) are well suited to address a variety of reconstruction problems in high energy particle physics. 
   In particular, particle tracking data is naturally represented as a graph by identifying silicon tracker hits as nodes and particle trajectories as edges; given a set of hypothesized edges, edge-classifying GNNs identify those corresponding to real particle trajectories. 
   In this work, we adapt the physics-motivated interaction network (IN) GNN toward the problem of particle tracking in pileup conditions similar to those expected at the high-luminosity Large Hadron Collider.
-  Assuming an idealized track seeding, we demonstrate the IN's excellent edge-classification accuracy and tracking efficiency through a suite of measurements at each stage of GNN-based tracking: graph construction, edge classification, and track building. 
+  Assuming idealized hit filtering at various particle momenta thresholds, we demonstrate the IN's excellent edge-classification accuracy and tracking efficiency through a suite of measurements at each stage of GNN-based tracking: graph construction, edge classification, and track building. 
   The proposed IN architecture is substantially smaller than previously studied GNN tracking architectures; this is particularly promising as a reduction in size is critical for enabling GNN-based tracking in constrained computing environments. 
   Furthermore, the IN may be represented as either a set of explicit matrix operations or a message passing GNN. 
   Efforts are underway to accelerate each representation via heterogeneous computing resources towards both high-level and low-latency triggering applications. 
@@ -120,8 +120,8 @@ We conclude in the same section with outlook and discussion of future studies, i
 
 In collider experiments such as the LHC, charged particle trackers are comprised of cylindrical detector layers immersed in an axially-aligned magnetic field. 
 The detector geometry is naturally described by cylindrical coordinates $(r,\phi,z)$, where the $z$ axis is aligned with the beamline. 
-Pseudorapidity is a measure of angle with respect to the beamline, defined as $\eta=-\log\tan\frac{\theta}{2}$ where $\theta$ is the polar angle.
-Charged particles produced in collision events move in helical trajectories through the magnetic field, generating localized hits in the detector tracker layers via ionization energy deposits. 
+Pseudorapidity is a measure of angle with respect to the beamline, defined as $\eta\coloneqq-\log\tan\frac{\theta}{2}$ where $\theta$ is the polar angle.
+Charged particles produced in collision events move in helical trajectories through the magnetic field, generating localized hits in the tracker layers via ionization energy deposits. 
 Track reconstruction consists of ``connecting the dots,'' wherein hits are systematically grouped to form charged particle trajectories. 
 We refer to a pair of hits that belong to the same particle as a track segment, such that the line extending between the hits is a linear approximation of the particle's trajectory. 
 Note that in a high-pileup scenario, track hits might correspond to multiple overlapping particle trajectories. 
@@ -149,7 +149,7 @@ Improving the seeding stage of the tracking pipeline is an important step toward
 \caption{Here we depict a particle tracker geometry similar to tracker designs proposed for the HL-LHC era. 
 This ``generic tracker'' geometry is used in the TrackML dataset (see Section~\ref{sec:measurements}). 
 The generic tracker is comprised of three sub-detectors named by the shape of their silicon modules: the pixel detector, the short strip detector, and the long strip detector. 
-Each sub-detector is divided into volumes (numbered 1-18); each volume contains a set of detector layers. 
+Each sub-detector is divided into volumes (numbered 7-18); each volume contains a set of detector layers. 
 Volumes 8, 13, and 17 above are referred to as the \textit{barrel} of the detector because their layers sit at a constant cylindrical radius. 
 Volumes 7, 9, 12, 14, 16, and 18 comprise the tracker's \textit{endcaps} because of their disk-like shape; endcap layers are positioned at a single point along the $z$-axis. 
 The above figure is adapted from a figure in Ref.~\cite{TrackML} and the TrackML detector diagram accompanying Kaggle's TrackML dataset.}
@@ -181,7 +181,7 @@ We consider two formulations of the IN: (1) the matrix formulation, suitable for
 These formulations are equivalent in theory, but specific implementations and training procedures can vary their computational and physics performance. 
 In particular, the COO encoding of the edge adjacency can greatly reduce the memory footprint for training. 
 For this reason, the measurements performed in this paper are based on the message-passing formulation. 
-In section~\ref{matrixformulation}, we review the matrix formulation as presented in the original IN paper \cite{IN}, subsequently expanding the notation to describe the message passing IN in ~\ref{messagepassingformulation}. 
+In Section~\ref{matrixformulation}, we review the matrix formulation as presented in the original IN paper \cite{IN}, subsequently expanding the notation to describe the message-passing IN formulation in Section ~\ref{messagepassingformulation}. 
 
 \subsection{Matrix Formulation}\label{matrixformulation}
 The original IN was formulated using simple matrix operations interpreted as a set of physical interactions and effects \cite{IN}. 
@@ -249,8 +249,8 @@ We note that constraining our studies to the pixel layers reduces the size of th
 In the graph construction stage, each event's tracker hits are converted to a hitgraph through an edge selection algorithm. 
 Typically, a set of truth filters are applied to hits before they are assigned to graph nodes. 
 For example, \textit{$\pt$ filters} reject hits generated by particles with $\pt<\pt^\mathrm{min}$, \textit{noise filters} reject noise hits, and \textit{same-layer filters} reject all but one hit per layer for each particle. 
-These truth filters are used to modulate the number of hits present in each hit graph to make it more feasible to apply GNN methods and can be thought of as an idealized track seeding step.
-One goal of future R\&D is to lower or remove this truth-based filter or replace it with a realistic track seeding step that could be applied in a high-pileup experimental setting.
+These truth filters are used to modulate the number of hits present in each hit graph to make it more feasible to apply GNN methods and can be thought of as an idealized hit filtering step (see Table~\ref{tab:hit_losses}).
+One goal of future R\&D is to lower or remove this truth-based filter or replace it with a realistic hit filtering step that could be applied in a high-pileup experimental setting.
 After initial hit filtering yields a set of nodes, edge-assignment algorithms extend edges between certain nodes. 
 These edges are inputs to the inference stage and must therefore represent as many true track segments as possible. 
 Naively, one might return a fully-connected hitgraph. 
@@ -282,7 +282,7 @@ In this work, we compare multiple graph construction algorithms, each of which d
 In all methods, only pixel detector hits are considered, pseudorapidity is restricted to $\eta\in[-4,4]$, and 
 the noise and same-layer hit filters are applied. 
 Each method has the same definition of graph construction efficiency $(N_{\mathrm{true}}^{\mathrm{reconstructed}}/N_{\mathrm{true}}^{\mathrm{possible}})$ and purity $(N_{\mathrm{true}}^{\mathrm{reconstructed}}/N_{\mathrm{total}}^{\mathrm{reconstructed}})$.
-The denominator quantity $N_{\mathrm{true}}^{\mathrm{possible}}$ is independent of the graph construction algorithm such one may directly compare the efficiencies of various methods.
+The denominator quantity $N_{\mathrm{true}}^{\mathrm{possible}}$ is independent of the graph construction algorithm such that one may directly compare the efficiencies of the various methods.
 On the other hand, the denominator $N_{\mathrm{total}}^{\mathrm{reconstructed}}$ depends on the specific graph construction routine; for this reason, it is important to study purity in the context of efficiency.
 The same-layer filter introduces an ambiguity in defining edges between the barrel and innermost endcap layers. 
 Specifically, barrel hits generated by the same particle could produce multiple true edges incoming to a single endcap hit. 
@@ -292,8 +292,8 @@ For this reason, a \textit{barrel intersection} cut was developed, in which edge
 \begin{figure}[!htbp]
 \centering
 \includegraphics[width=0.7\columnwidth]{intersecting_line_cut.pdf}
-\caption{The transition region between the barrel and endcaps introduces an ambiguity in truth labeling edges crossing from barrel to endcap layers. 
-Specifically, one may draw multiple true edges between hits in barrel layers and the innermost endcap layer. 
+\caption{The transition region between the barrel and endcaps introduces an ambiguity in truth-labeling edges crossing from barrel to endcap layers. 
+Specifically, one may draw multiple possible edges between hits in barrel layers and the innermost endcap layer. 
 Only one such edge can be true; the others (labeled red) should be rejected. 
 The barrel intersection cut rejects any edges between a barrel layer and an innermost endcap layer that intersect an intermediate barrel layer. 
 Accordingly, the red edges would be rejected by the intersecting line cut and the blue edges would not.}
@@ -408,7 +408,8 @@ In the track building step, the predicted edge weights $w_k\in W(\mathcal{G}_\ma
 If the edge weight mask perfectly reproduced the training target (i.e. $\mathtt{int}(W(\mathcal{G}_\mathrm{COO})\geq\delta^*)=y$), the edge-classification step would produce $n_\mathrm{particles}$ disjoint subgraphs, each corresponding to a single particle. 
 Imperfect edge-classification leads to spurious connections between these subgraphs, prompting the need for more sophisticated track-building algorithms. 
 Here, we use the union-find algorithm~\cite{unionfind} and DBSCAN to cluster hits in the edge-weighted graphs. 
-Hit clusters are then considered to be reconstructed tracks candidates; the track candidates are then matched to simulated particles (when possible). In a full tracking pipeline these track candidates would then be fit to extract track parameters such as $\pt$ and $\eta$; in this work we use truth information for matched tracks to get the track parameters.
+Hit clusters are then considered to be reconstructed tracks candidates; the track candidates are then matched to simulated particles (when possible). 
+In a full tracking pipeline, these track candidates would then be fit to extract track parameters such as $\pt$ and $\eta$; in this work we use truth information for matched particles to get the track parameters.
 Tracking efficiency metrics measure the relative success of the clustering and matching process using various definitions. 
 We define three tracking efficiency measurements using progressively tighter requirements to allow comparison with current tracking algorithm efficiencies and other on-going HL-LHC tracking studies:
 \begin{enumerate}
@@ -416,17 +417,19 @@ We define three tracking efficiency measurements using progressively tighter req
     \item Double-majority efficiency: the number of reconstructed tracks containing over 50\% of hits from the same particle and over 50\% of that particle's hits, divided by the total number of particles.
     \item Perfect match efficiency: the number of reconstructed tracks containing only hits from the same particle and every hit generated by that particle, divided by the number of particles.
 \end{enumerate}
-We note that the `Perfect Match' efficiency is not an efficiency definition commonly used by experiments, but we present it to demonstrate the absolute performance of the GNN tracking pipeline. 
+We note that the perfect match efficiency is not commonly used by experiments as 100\% is not realistically achievable, but we present it to demonstrate the absolute performance of the GNN tracking pipeline.
 
-Fig. \ref{fig:tracking-effs} shows each of these tracking efficiencies as a function of track $\pt$ and $\eta$ for both the DBSCAN and union-find clustering approaches. 
-Additionally, Table~\ref{tab:fake-rate} shows the fake rate (unmatched clusters relative to all clusters) across the full $\pt$ and $\eta$ range. The efficiencies and fake rates are calculated using a $\pt$ cut of 0.9 GeV.
-Tracking performance is relatively stable at low $\pt$ but degrades for higher $\pt$ tracks; similar effects have been noted in other edge-weight-based hit clustering schemes \cite{Biscarat:2021dlj}. 
+Figure~\ref{fig:tracking-effs} shows each of these tracking efficiencies as a function of particle $\pt$ and $\eta$ for both the DBSCAN and union-find clustering approaches. 
+Additionally, Table~\ref{tab:fake-rate} shows the fake rate, or fraction of unmatched clusters relative to all clusters, across the full $\pt$ and $\eta$ range. 
+The efficiencies and fake rates are calculated using a $\pt$ cut of 0.9\GeV.
+Tracking performance is relatively stable at low $\pt$ but degrades for higher $\pt$ particles; similar effects have been noted in other edge-weight-based hit clustering schemes \cite{Biscarat:2021dlj}. 
 The tracking efficiencies are lowest in the neighborhood of $\eta=0$, indicating that performance is worst in the pixel barrel region.
 This is consistent with the observation that most edge classification errors occur in the barrel, where the density of detector modules is significantly higher \cite{TrackML}. 
 Tracking efficiency loss around $|\eta|\approx 2.5$ corresponds to the transition region between barrel and endcap layers. 
 DBSCAN demonstrates higher tracking efficiency than union-find across all $\pt$ and $\eta$ values and efficiency definitions. 
 This performance gap is likely due to the additional spatial information used in DBSCAN's clustering routine. 
-Moving forward, additional tracking performance may be recovered by leveraging the specific values of each edge weight to make dynamic hit clustering decisions. The fake rates are relatively low for both track-building methods, and as expected roughly increase with increased tightness of the efficiency definitions. Interestingly, DBSCAN demonstrates a lower fake rate for `LHC Match' efficiency while Union-find demonstrates a lower fake rate for the `Perfect Match' efficiency; DBSCAN also has a larger drop in tracking efficency between the `Double Match' and `Perfect Match' definitions, indicating that while DBSCAN identifies more track candidates, union-find identifies builds tracks more precisely. 
+Moving forward, additional tracking performance may be recovered by leveraging the specific values of each edge weight to make dynamic hit clustering decisions. The fake rates are relatively low for both track-building methods, and as expected roughly increase with increased tightness of the efficiency definitions. 
+Interestingly, DBSCAN demonstrates a lower fake rate for LHC match efficiency while union-find demonstrates a lower fake rate for the perfect match efficiency; DBSCAN also has a larger drop in tracking efficency between the double match and perfect match definitions, indicating that while DBSCAN identifies more track candidates, union-find builds tracks more precisely. 
 
 
 \begin{figure*}[!htbp]
@@ -445,7 +448,7 @@ Moving forward, additional tracking performance may be recovered by leveraging t
         Double majority & $0.0934\pm0.01$ & $0.0891\pm0.01$\\
         Perfect match & $0.0910\pm0.01$ & $0.1242\pm0.01$\\
     \end{tabular}
-    \caption{Overall fake rates of union-find and DBSCAN track-building for three tracking efficiency definitions}
+    \caption{Overall fake rates of union-find and DBSCAN track-building for three tracking efficiency definitions for $\pt^\mathrm{min}=0.9\GeV$.}
     \label{tab:fake-rate}
 \end{table}
 
@@ -538,8 +541,8 @@ While this preliminary FPGA acceleration work is promising, there are several li
 \section{Summary and Outlook}
 \label{sec:summary}
 % Recap of paper intro 'we've presented interaction network (what network is), demonstrated excellent candidate for track finding
-In this work, we have shown that the physics-motivated IN is well suited to the task of charged particle tracking across a range of hitgraph sizes. 
-Through a suite of graph construction, edge classification, and track building measurements, we have framed the IN's performance in the context of a GNN-based tracking pipeline following a truth-based track seeding preselection in which hits associated with particles whose transverse momentum ($\pt$) is below a certain threshold ($\pt^\mathrm{min}$) are removed. 
+In this work, we have shown that the physics-motivated interaction network (IN), a type of graph neural network (GNN), is well suited to the task of charged particle tracking across a range of hitgraph sizes. 
+Through a suite of graph construction, edge classification, and track building measurements, we have framed the IN's performance in the context of a GNN-based tracking pipeline following a truth-based hit filtering preselection in which hits associated with particles whose transverse momentum ($\pt$) is below a certain threshold ($\pt^\mathrm{min}$) are removed. 
 The graph construction measurements demonstrate that geometric cuts, hit clustering, and data-driven strategies are effective in constructing highly-efficient graphs from pixel barrel and endcap layers; in constrained computing environments, the parameters of each strategy allow a trade-off between graph efficiency and purity. 
 In particular, for a fixed graph construction efficiency of $\mathcal{O}(99\%)$, we show that geometric cuts alone produce reasonably pure graphs ($\sim4\%$ purity at $\pt^\mathrm{min}=1\GeV$) but that the module-map method produces the most pure graphs for the entire range of $\pt^\mathrm{min}$ ($\sim10\%$ purity at $\pt^\mathrm{min}=1\GeV$).
 With efficiency held constant, purity is more-or-less a comparison of graph sizes, indicating that the module map method most suited for graph construction in constrained computing environments. 
@@ -561,7 +564,7 @@ Another important aspect of GNN-based tracking is reducing the time it takes to 
 Ongoing efforts are dedicated to studying how best to accelerate graph construction using heterogeneous resources.
 Alternative GNN approaches that do not require an input graph structure, such as dynamic graph convolutional neural networks~\cite{DGCNN}, distance-weighted GNNs~\cite{Qasim:2019otl}, attention-based transformers~\cite{vaswani2017attention}, reformers~\cite{kitaev2020reformer}, and performers~\cite{choromanski2021rethinking}, may be fruitful avenues of investigation as well.
 
-In summary, geometric deep learning methods are well suited to many physics reconstruction tasks, and our work and related studies establish GNNs as an extremely promising candidate for tracking at the HL-LHC. 
+In summary, geometric deep learning methods can be naturally applied to many physics reconstruction tasks, and our work and related studies establish GNNs as an extremely promising candidate for tracking at the high luminosity LHC. 
 
 % Outlook / need to integrate into future experiments, can mention we're beginning work with CMS and ATLAS? 
 
